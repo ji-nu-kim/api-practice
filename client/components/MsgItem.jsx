@@ -1,8 +1,9 @@
 import React from 'react';
+import MsgInput from './MsgInput';
 
-const MsgItem = ({userId, timestamp, text}) => {
+const MsgItem = ({id, userId, timestamp, text, onUpdate, onDelete, isEditing, startEdit}) => {
   return (
-    <li>
+    <li className="messages__item">
       <h3>
         {userId}{' '}
         <sub>
@@ -16,10 +17,21 @@ const MsgItem = ({userId, timestamp, text}) => {
           })}
         </sub>
       </h3>
+    
+      {isEditing ? (
+        <>
+          <MsgInput mutate={onUpdate} id={id} text={text}/>
+        </>
+      ) : (
+        text
+      )}
 
-      {text}
+      <div className="messages__buttons">
+        <button onClick={startEdit}>수정</button>
+        <button onClick={onDelete}>삭제</button>
+      </div>
     </li>
   )
 }
 
-export default MsgItem
+export default MsgItem;
