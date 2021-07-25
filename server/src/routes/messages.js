@@ -9,9 +9,10 @@ const messagesRoute = [
     // GET MESSAGES
     method: 'get',
     route: '/messages',
-    handler: (req, res) => {
+    handler: ({ query: { cursor = '' } }, res) => {
       const msgs = getMsgs();
-      res.send(msgs);
+      const fromIndex = msgs.findIndex(msg => msg.id === cursor) + 1;
+      res.send(msgs.slice(fromIndex, fromIndex + 15));
     },
   },
   {
@@ -20,7 +21,7 @@ const messagesRoute = [
     handler: ({ params: { id } }, res) => {
       try {
         const msgs = getMsgs();
-        const msg = msgs.find(msg => msg.id === parseInt(id, 10));
+        const msg = msgs.find(msg => msg.id === id);
         if (!msg) throw Error('메시지를 찾을 수 없습니다');
         res.send(msg);
       } catch (err) {
@@ -33,16 +34,21 @@ const messagesRoute = [
     method: 'post',
     route: '/messages',
     handler: ({ body }, res) => {
-      const msgs = getMsgs();
-      const newMsg = {
-        id: v4(),
-        text: body.text,
-        userId: body.userId,
-        timestamp: Date.now(),
-      };
-      msgs.unshift(newMsg);
-      setMsgs(msgs);
-      res.send(newMsg);
+      try {
+        if (!body.userId) throw Error('no user id');
+        const msgs = getMsgs();
+        const newMsg = {
+          id: v4(),
+          text: body.text,
+          userId: body.userId,
+          timestamp: Date.now(),
+        };
+        msgs.unshift(newMsg);
+        setMsgs(msgs);
+        res.send(newMsg);
+      } catch (error) {
+        res.status(500).send({ error: err });
+      }
     },
   },
   {
@@ -54,8 +60,7 @@ const messagesRoute = [
         const msgs = getMsgs();
         const targetIndex = msgs.findIndex(msg => msg.id === id);
         if (targetIndex < 0) throw '메시지가 없습니다';
-        if (msg[targetIndex].userId !== body.userId) throw '사용자가 다릅니다';
-
+        if (msgs[targetIndex].userId !== body.userId) throw '사용자가 다릅니다';
         const newMsg = { ...msgs[targetIndex], text: body.text };
         msgs.splice(targetIndex, 1, newMsg);
         setMsgs(msgs);
@@ -69,12 +74,13 @@ const messagesRoute = [
     // DELETE MESSAGES
     method: 'delete',
     route: '/messages/:id',
-    handler: ({ body, params: { id } }, res) => {
+    handler: ({ params: { id }, query: { userId } }, res) => {
       try {
         const msgs = getMsgs();
         const targetIndex = msgs.findIndex(msg => msg.id === id);
+
         if (targetIndex < 0) throw '메시지가 없습니다';
-        if (msg[targetIndex].userId !== body.userId) throw '사용자가 다릅니다';
+        if (msgs[targetIndex].userId !== userId) throw '사용자가 다릅니다';
 
         msgs.splice(targetIndex, 1);
         setMsgs(msgs);
