@@ -45,7 +45,7 @@ export const UPDATE_MESSAGE = gql`
 `;
 
 export const DELETE_MESSAGE = gql`
-  mutation DELETE_MESSAGE($id: ID!, userId: ID!) {
+  mutation DELETE_MESSAGE($id: ID!, $userId: ID!) {
     deleteMessage(id: $id, userId: $userId)
   }
 `;
